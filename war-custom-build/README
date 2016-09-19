@@ -1,0 +1,6 @@
+# envionment variables:
+1. WAR_DEPLOY_DIR: defined war deployed path,default /opt/webserver/webapps.
+2. BUILD_BASE_IMAGE_NAME: defined base image which war run in, must provide.
+3. DOCKERFILE_CMD: defined output image RUN CMD,default /opt/webserver/bin/launch.sh.
+4. DOCKER_RUN_UID: defined UID which output image run with,default 185.
+5. CUSTOM_DOCKERFILE: cover default dockerfile.

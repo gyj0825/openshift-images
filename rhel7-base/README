@@ -1,11 +1,11 @@
-describe:
+# describe:
 
   this is a base image which is based on rhel7
 
-specification:
+# specification:
 
   Park their repo files in repo directory
 
-build command:
+# build command:
 
-run # sh docker-build.sh 
+  run #sh docker-build.sh 

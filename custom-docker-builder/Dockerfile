@@ -1,8 +1,10 @@
 FROM openshift3/rhel7-base
 
+ADD repo/* /etc/yum.repos.d/
 RUN INSTALL_PKGS="gettext automake make docker" && \
     yum install -y $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
+    rm -rf /etc/yum.repos.d/* && \
     yum clean all
 
 LABEL io.k8s.display-name="OpenShift Custom Builder Example" \

@@ -1,0 +1,8 @@
+tar command:
+# tar -zcpPf test.tar.gz /mnt/ /tmp/
+# tar -zxPpf test.tar.gz
+
+
+envionment variables:
+1. BUILD_BASE_IMAGE_NAME: defined base image which war run in, must provide.
+2. CUSTOM_DOCKERFILE: cover default dockerfile.
