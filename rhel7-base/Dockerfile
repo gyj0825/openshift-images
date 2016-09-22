@@ -4,15 +4,15 @@
 #
 # The standard name for this image is openshift/ose-base
 #
-FROM rhel7
+FROM registry.access.redhat.com/rhel7.2:latest
 
-ADD repo/* /etc/yum.repo.d/
+ADD repo/* /etc/yum.repos.d/
 RUN INSTALL_PKGS="which git tar wget hostname sysvinit-tools util-linux bsdtar \
       socat ethtool device-mapper iptables tree findutils nmap-ncat e2fsprogs xfsprogs lsof" && \
     yum install -y $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     yum clean all && \
-    rm -rf /etc/yum.repo.d/* &&\
+    rm -rf /etc/yum.repos.d/* &&\
     mkdir -p /var/lib/origin
 
 LABEL io.k8s.display-name="Atomic OpenShift RHEL 7 Base" \
