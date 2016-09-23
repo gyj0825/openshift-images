@@ -53,13 +53,34 @@ fi
 pushd "${BUILD_DIR}"
 
 if [ ! -n "$BUILD_BASE_IMAGE_NAME" ];then
-  echo "Error! please provide base image to builder"
+  echo "Error: please provide base image to builder"
   exit 1
 fi
 
-RUN_UID=`docker inspect $BUILD_BASE_IMAGE_NAME | grep User | sed -n 1p | awk -F '"' '{print $4}'`
+RUN_UID=`docker inspect $BUILD_BASE_IMAGE_NAME | grep  -E "\"User\": \"[0-9]+\"" | sed -n 1p | awk -F '"' '{print $4}'`
 
-dockerfile="FROM $BUILD_BASE_IMAGE_NAME\nCOPY ${PKG_NAME} /tmp/${PKG_NAME}\nUSER 0\nRUN tar -zxpPf /tmp/${PKG_NAME}\nUSER $RUN_UID"
+if [ ! -n "$RUN_UID" ];then
+   echo "Error: $BUILD_BASE_IMAGE_NAME do not assign User"
+   exit 1 
+fi
+
+#define patch command,default unzip ,you can use "tar -zxf","rpm -ivh" etc
+patch_command="unzip"
+
+if [ -n "$PATCH_COMMAND" ];then
+  echo "using custom command to pacth......"
+  patch_command=${PATCH_COMMAND}
+fi
+
+# define run command, default "${patch_command} /tmp/${PKG_NAME}"
+run_command="${patch_command} /tmp/${PKG_NAME}"
+
+if [ -n "$RUN_COMMAND" ];then
+  echo "using custom run_command to run......"
+  run_command=${RUN_COMMAND}
+fi
+
+dockerfile="FROM $BUILD_BASE_IMAGE_NAME\nCOPY ${PKG_NAME} /tmp/${PKG_NAME}\nUSER 0\nWORKDIR /\nRUN  ${run_command}\nUSER $RUN_UID"
 
 if [ -n "$CUSTOM_DOCKERFILE" ];then
   echo "using custom Dockerfile to build......"

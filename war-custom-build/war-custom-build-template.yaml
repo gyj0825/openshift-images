@@ -1,0 +1,182 @@
+apiVersion: v1
+kind: Template
+labels:
+  template: wars-custom-build-template
+metadata:
+  annotations:
+    description: This example shows how to deploy war in openshift.
+  creationTimestamp: null
+  name: wars-custom-build-template
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      description: The web server's http port.
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+  spec:
+    ports:
+    - name: web
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      deploymentConfig: ${APPLICATION_NAME}
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  id: ${APPLICATION_NAME}-http
+  kind: Route
+  metadata:
+    creationTimestamp: null
+    annotations:
+      description: Route for application's http service.
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+  spec:
+    host: ${HOSTNAME_HTTP}
+    to:
+      kind: Service
+      name: ${APPLICATION_NAME}
+  status: {}
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: ${APPLICATION_NAME}:latest
+    source:
+      git:
+        uri: ${SOURCE_WAR_URL}
+      type: Git
+    strategy:
+      customStrategy:
+        forcePull: true
+        env:
+        - name: BUILD_BASE_IMAGE_NAME
+          value: ${BUILD_BASE_IMAGE_NAME}
+        - name: WAR_DEPLOY_DIR
+          value: ${WAR_DEPLOY_DIR}
+        exposeDockerSocket: true
+        from:
+          kind: DockerImage
+          name: openshift3/war-custom-docker-builder:v3.2.1.1
+      type: Custom
+    triggers:
+    - generic:
+        secret: ${GENERIC_WEBHOOK_SECRET}
+      type: generic
+    - imageChange: {}
+      type: imageChange
+    - type: ConfigChange
+  status:
+    lastVersion: 0
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    creationTimestamp: null
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+  spec:
+    replicas: 1
+    selector:
+      deploymentConfig: ${APPLICATION_NAME}
+    strategy:
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        timeoutSeconds: 120
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          application: ${APPLICATION_NAME}
+          deploymentConfig: ${APPLICATION_NAME}
+        name: ${APPLICATION_NAME}
+      spec:
+        containers:
+        - capabilities: {}
+          env:
+          - name: JAVA_TOOL_OPTIONS
+            value: ${JAVA_TOOL_OPTIONS}
+          - name: JAVA_HOME
+            value: ${JAVA_HOME}
+          - name: JAVA_VERSION
+            value: ${JAVA_VERSION}
+          image: ${APPLICATION_NAME}
+          imagePullPolicy: Always
+          name: ${APPLICATION_NAME}
+          ports:
+          - containerPort: 8080
+            name: http
+            protocol: TCP
+          resources: {}
+          securityContext:
+            capabilities: {}
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        serviceAccount: ""
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - ${APPLICATION_NAME}
+        from:
+          kind: ImageStream
+          name: ${APPLICATION_NAME}
+      type: ImageChange
+    - type: ConfigChange
+  status: {}
+parameters:
+- description: The name for the application.
+  name: APPLICATION_NAME
+  required: true
+  value: jws-app
+- description: 'Custom hostname for http service route.  Leave blank for default hostname,
+    e.g.: <application-name>-<project>.<default-domain-suffix>'
+  name: HOSTNAME_HTTP
+- description: The name of base image.
+  name: BUILD_BASE_IMAGE_NAME
+  required: true
+  value: umetrip-jboss-webserver-3/jboss-webserver30-tomcat7-umetrip:2.0
+- description: source WAR URI for application
+  name: SOURCE_WAR_URL
+  required: true
+  value: http://192.168.40.102:8089/wars/echo-web-0.0.1-SNAPSHOT.war
+- description: deploy WAR dir,default /opt/webserver/webapps
+  name: WAR_DEPLOY_DIR
+- description: JAVA_TOOL_OPTIONS
+  name: JAVA_TOOL_OPTIONS
+  value: '-Duser.home=/home/jboss'
+- description: JAVA_HOME
+  name: JAVA_HOME
+  value: /usr/lib/jvm/java-1.7.0
+- description: JAVA_VERSION
+  name: JAVA_VERSION
+  value: 1.7.0
+- description: Generic build trigger secret
+  from: '[a-zA-Z0-9]{8}'
+  generate: expression
+  name: GENERIC_WEBHOOK_SECRET
+  required: true
