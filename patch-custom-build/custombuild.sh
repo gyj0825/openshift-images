@@ -38,6 +38,7 @@ if [[ -n "${SOURCE_REPOSITORY}" ]]; then
     echo "Could not access source url: ${SOURCE_REPOSITORY}"
     exit 1
   fi
+  buildflag=true
 fi
 
 BUILD_DIR=$(mktemp --directory)

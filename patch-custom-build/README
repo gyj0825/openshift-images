@@ -14,7 +14,9 @@
   2. define variables
   
   autobuild message:
-     you can create application build and patch build in same project.patch builder tigger by application buildconfig output imagestream.normally only application be deployed,when patch build complate,will deploy patch images and scaledown normal application pod to 0.
+     you can create application build and patch build in same project.patch builder tigger by application buildconfig output imagestream.any application will build two times.then deploy patch image in opensift.
+  workflow:
+    application build ----> output imagesteam-app -----> tigger patch build  ----> output imagestream-patch  ----->  deploy imagestream-patch
   
 # envionment variables:
 1. BASE_PATCH_IMAGE: defined which image will patched,support image and imagestream, must provide.
