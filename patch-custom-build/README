@@ -1,13 +1,22 @@
-#desciption:
+# desciption:
   patch to images or imagestream for openshift3
 
-#usage:
+# usage:
+  normally patch: single patch build
   1. create template in openshift
-  # oc create -f patch-custom-autobuild-template.yaml -n openshift
+  $ oc create -f patch-custom-build-template.yaml -n openshift
   2. use template in openshift console
   envionment variables see below.
+
+  autobuild patch: auto build base a imagestream you define in envionment.
+  1. create autobuild template in openshift
+  $ oc create -f patch-custom-autobuild-template.yaml -n openshift
+  2. define variables
   
-#envionment variables:
+  autobuild message:
+     you can create application build and patch build in same project.patch builder tigger by application buildconfig output imagestream.normally only application be deployed,when patch build complate,will deploy patch images and scaledown normal application pod to 0.
+  
+# envionment variables:
 1. BASE_PATCH_IMAGE: defined which image will patched,support image and imagestream, must provide.
    example:
       use image: registry.example.com:5000/jboss-webserver-3/webserver30-tomcat7-openshift:1.2
