@@ -42,6 +42,7 @@ fi
 
 BUILD_DIR=$(mktemp --directory)
 
+# download patch packages
 PKG_NAME=`basename $URL`
 echo ">> Downloading Patch packages... "
 curl -v $URL -o ${BUILD_DIR}/${PKG_NAME}
@@ -52,15 +53,39 @@ if [ $? != 0 ]; then
 fi
 pushd "${BUILD_DIR}"
 
-if [ ! -n "$BUILD_BASE_IMAGE_NAME" ];then
+#if NAMESPACE is't openshift,you must add policy.
+if [ ! -n "$NAMESPACE" ];then
+  namespace=`cat /var/run/secrets/kubernetes.io/serviceaccount/namespace`
+else
+  namespace=$NAMESPACE
+fi
+
+#use API get imagestream status 
+#TOKEN="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
+#base_image_name=`curl -s  -H "Authorization: Bearer $TOKEN" --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt  https://openshift.default.svc.cluster.local/oapi/v1/namespaces/$namespace/imagestreams/$IMAGESTREAM | grep dockerImageRepository | awk -F '"' '{print $4}'`
+#base_image_tag=latest
+#base_image=$base_image_name:$base_image_tag
+
+# support imagestream and image
+if [ ! -n "$BASE_PATCH_IMAGE" ];then
   echo "Error: please provide base image to builder"
   exit 1
 fi
 
-RUN_UID=`docker inspect $BUILD_BASE_IMAGE_NAME | grep  -E "\"User\": \"[0-9]+\"" | sed -n 1p | awk -F '"' '{print $4}'`
+echo $BASE_PATCH_IMAGE | grep -q "/" 
+# decide image or imagstream
+if [ $? != 0 ];then
+   build_base_image=${OUTPUT_REGISTRY}/${namespace}/${BASE_PATCH_IMAGE}:latest
+else
+   build_base_image=$BASE_PATCH_IMAGE
+fi
+echo "pacth image: {'image': '$build_base_image'}"
+
+# get patch image user id
+RUN_UID=`docker inspect $build_base_image | grep  -E "\"User\": \"[0-9]+\"" | sed -n 1p | awk -F '"' '{print $4}'`
 
 if [ ! -n "$RUN_UID" ];then
-   echo "Error: $BUILD_BASE_IMAGE_NAME do not assign User"
+   echo "Error: $build_base_image do not assign User"
    exit 1 
 fi
 
@@ -80,7 +105,8 @@ if [ -n "$RUN_COMMAND" ];then
   run_command=${RUN_COMMAND}
 fi
 
-dockerfile="FROM $BUILD_BASE_IMAGE_NAME\nCOPY ${PKG_NAME} /tmp/${PKG_NAME}\nUSER 0\nWORKDIR /\nRUN  ${run_command}\nUSER $RUN_UID"
+# generated Dockerfile
+dockerfile="FROM $build_base_image\nCOPY ${PKG_NAME} /tmp/${PKG_NAME}\nUSER 0\nWORKDIR /\nRUN  ${run_command}\nUSER $RUN_UID"
 
 if [ -n "$CUSTOM_DOCKERFILE" ];then
   echo "using custom Dockerfile to build......"

@@ -33,8 +33,8 @@ objects:
       customStrategy:
         forcePull: true
         env:
-        - name: BUILD_BASE_IMAGE_NAME
-          value: ${BUILD_BASE_IMAGE_NAME}
+        - name: BASE_PATCH_IMAGE
+          value: ${BASE_PATCH_IMAGE}
         - name: PATCH_COMMAND
           value: ${PATCH_COMMAND}
         - name: RUN_COMMAND
@@ -56,11 +56,11 @@ parameters:
   name: APPLICATION_NAME
   required: true
   value: jws-app
-- description: The name of base image.
-  name: BUILD_BASE_IMAGE_NAME
+- description: The name of base patch image,Support image_name and imagestream_name.
+  name: BASE_PATCH_IMAGE
   required: true
-  value: umetrip-jboss-webserver-3/jboss-webserver30-tomcat7-umetrip:2.0
-- description: source patch URI for application(.tar.gz),please use -zcpPf
+  value: jboss-webserver-3/webserver30-tomcat7-openshift:1.2 / php-is 
+- description: source patch URI for application,must a file.
   name: PATCH_FILE_URL
   required: true
   value: http://192.168.40.102:8089/wars/test.tar.gz
