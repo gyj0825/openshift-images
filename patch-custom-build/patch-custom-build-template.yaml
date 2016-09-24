@@ -39,6 +39,8 @@ objects:
           value: ${PATCH_COMMAND}
         - name: RUN_COMMAND
           value: ${RUN_COMMAND}
+        - name: RUN_UID
+          value: ${RUN_UID}
         exposeDockerSocket: true
         from:
           kind: DockerImage
@@ -68,6 +70,8 @@ parameters:
   name: PATCH_COMMAND
 - description: define dockerfile run command,default (patch_command /tmp/PKG_NAME)
   name: RUN_COMMAND
+- description: define dockerfile run use,default same with patch images,can't use root.
+  name: RUN_UID
 - description: Generic build trigger secret
   from: '[a-zA-Z0-9]{8}'
   generate: expression

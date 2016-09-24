@@ -26,3 +26,4 @@
 4. PATCH_FILE_URL: source patch packages URI for application,must a file.
 5. PATCH_COMMAND: define patch command,default unzip ,you can use "tar -zxf","rpm -ivh" etc
 6. RUN_COMMAND: define run command, default "${patch_command} /tmp/${PKG_NAME}"
+7. RUN_UID: define dockerfile run use,default same with patch images,can't use root.
