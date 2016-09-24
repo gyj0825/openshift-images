@@ -1,8 +1,19 @@
-tar command:
-# tar -zcpPf test.tar.gz /mnt/ /tmp/
-# tar -zxPpf test.tar.gz
+#desciption:
+  patch to images or imagestream for openshift3
 
-
-envionment variables:
-1. BUILD_BASE_IMAGE_NAME: defined base image which war run in, must provide.
+#usage:
+  1. create template in openshift
+  # oc create -f patch-custom-autobuild-template.yaml -n openshift
+  2. use template in openshift console
+  envionment variables see below.
+  
+#envionment variables:
+1. BASE_PATCH_IMAGE: defined which image will patched,support image and imagestream, must provide.
+   example:
+      use image: registry.example.com:5000/jboss-webserver-3/webserver30-tomcat7-openshift:1.2
+      use imagstream: my-app-is,if use imagestream,will use tag :latest to patch.
 2. CUSTOM_DOCKERFILE: cover default dockerfile.
+3. NAMESPACE: only use for $BASE_PATCH_IMAGE set to imagestream,be used to search imagestream.default be same with namesapce of buildconfig location.
+4. PATCH_FILE_URL: source patch packages URI for application,must a file.
+5. PATCH_COMMAND: define patch command,default unzip ,you can use "tar -zxf","rpm -ivh" etc
+6. RUN_COMMAND: define run command, default "${patch_command} /tmp/${PKG_NAME}"

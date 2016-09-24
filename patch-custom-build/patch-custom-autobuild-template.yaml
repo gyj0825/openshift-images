@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: Template
+labels:
+  template: patch-custom-build-template
+metadata:
+  annotations:
+    description: This example shows how to put a patch on image.
+  creationTimestamp: null
+  name: patch-custom-build-template
+objects:
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: ${APPLICATION_NAME}:latest
+    source:
+      git:
+        uri: ${PATCH_FILE_URL}
+      type: Git
+    strategy:
+      customStrategy:
+        forcePull: true
+        env:
+        - name: BASE_PATCH_IMAGE
+          value: ${BASE_PATCH_IMAGE}
+        - name: PATCH_COMMAND
+          value: ${PATCH_COMMAND}
+        - name: RUN_COMMAND
+          value: ${RUN_COMMAND}
+        exposeDockerSocket: true
+        from:
+          kind: DockerImage
+          name: openshift3/patch-custom-docker-builder:v3.2.1.1
+      type: Custom
+    triggers:
+    - generic:
+        secret: ${GENERIC_WEBHOOK_SECRET}
+      type: generic
+    - type: ConfigChange
+  status:
+    lastVersion: 0
+parameters:
+- description: The name for the application.
+  name: APPLICATION_NAME
+  required: true
+  value: jws-app
+- description: The name of base patch image,Support image_name and imagestream_name.
+  name: BASE_PATCH_IMAGE
+  required: true
+  value: jboss-webserver-3/webserver30-tomcat7-openshift:1.2 / php-is 
+- description: source patch URI for application,must a file.
+  name: PATCH_FILE_URL
+  required: true
+  value: http://192.168.40.102:8089/wars/test.tar.gz
+- description: define how to execute patch package,default unzip
+  name: PATCH_COMMAND
+- description: define dockerfile run command,default (patch_command /tmp/PKG_NAME)
+  name: RUN_COMMAND
+- description: Generic build trigger secret
+  from: '[a-zA-Z0-9]{8}'
+  generate: expression
+  name: GENERIC_WEBHOOK_SECRET
+  required: true
